@@ -244,7 +244,7 @@ public class StudioUI extends JFrame {
         orderTitle.setBorder(new EmptyBorder(0, 0, 10, 0));
         orderPanel.add(orderTitle, BorderLayout.NORTH);
 
-        // 🔥 GANTI JLIST DENGAN CART CONTAINER 🔥
+        // GANTI JLIST DENGAN CART CONTAINER
         cartContainer.setLayout(new BoxLayout(cartContainer, BoxLayout.Y_AXIS));
         cartContainer.setBackground(Color.WHITE);
         JScrollPane orderScroll = new JScrollPane(cartContainer);
@@ -496,7 +496,7 @@ public class StudioUI extends JFrame {
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.setMaximumSize(new Dimension(Short.MAX_VALUE, 40));
 
-        // 🔥 Menambahkan Animasi Hover Secara Otomatis
+        // Menambahkan Animasi Hover Secara Otomatis
         Color hoverColor = bg.darker(); // Java otomatis membuat versi gelap dari warnanya
         
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
