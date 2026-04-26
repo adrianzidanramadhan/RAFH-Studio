@@ -32,6 +32,10 @@ public class Booking {
         }
     }
 
+    public int getQty(Instrument i) {
+        return instruments.getOrDefault(i, 0);
+    }
+
     public int getTotal() {
         int total = 0;
 

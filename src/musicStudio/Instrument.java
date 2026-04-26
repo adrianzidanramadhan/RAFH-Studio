@@ -7,13 +7,15 @@ package musicStudio;
 public class Instrument {
     String name;
     int price;
+    int stock;
 
-    public Instrument(String name, int price) {
+    public Instrument(String name, int price, int stock) {
         this.name = name;
         this.price = price;
+        this.stock = stock;
     }
 
     public String toString() {
-        return name;
+        return name + " (stok: " + stock + ")";
     }
 }
