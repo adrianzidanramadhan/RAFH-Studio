@@ -57,34 +57,38 @@ public class StudioUI extends JFrame {
 
     public StudioUI() {
         setTitle("RAFH Studio & Instrument Rental");
-        //setSize(1150, 750);
+
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        
-        initDummyData();
-        loadBookedSchedulesFromCSV(); // Memuat data yang sudah disewa dari CSV
+
+        loadStudioFromDB();
+        loadInstrumentFromDB();
+
+//        loadBookedSchedulesFromCSV();
+
         currentBooking = new Booking(null, 0);
-        
+
         buildDashboardUI();
+    }
+    
+    void loadInstrumentFromDB() {
+
+        instruments.clear();
+
+        instruments.addAll(
+                InstrumentDAO.getAllInstrument()
+        );
     }
 
     // ================= DATA INISIAL =================
-    void initDummyData() {
-        studios.add(new Studio("Studio A (Standard)", 50000));
-        studios.add(new Studio("Studio B (Recording)", 75000));
-        studios.add(new Studio("VIP Studio (Full Set)", 150000));
+    void loadStudioFromDB() {
 
-        // Menambahkan deskripsi fitur
-        studioFeatures.put("Studio A (Standard)", "Fitur: 1 Gitar, 1 Drum, 1 Mic");
-        studioFeatures.put("Studio B (Recording)", "Fitur: 2 Gitar, 1 Drum, Set Recording");
-        studioFeatures.put("VIP Studio (Full Set)", "Fitur: Alat Lengkap + AC + Sound Engineer");
+        studios.clear();
 
-        instruments.add(new Instrument("Gitar Elektrik Fender", 40000, 5));
-        instruments.add(new Instrument("Gitar Akustik Yamaha", 20000, 8));
-        instruments.add(new Instrument("Drum Set Pearl", 80000, 3));
-        instruments.add(new Instrument("Mic Shure SM58", 15000, 5));
-        instruments.add(new Instrument("Bass Ibanez", 35000, 5));
+        studios.addAll(
+                StudioDAO.getAllStudio()
+        );
     }
 
     // ================= UI UTAMA (DASHBOARD) =================
@@ -674,6 +678,7 @@ public class StudioUI extends JFrame {
 
     // ================= CHECKOUT & JADWAL (CSV) =================
     void prosesCheckout() {
+        
         if (currentBooking == null || (currentBooking.studio == null && currentBooking.instruments.isEmpty())) {
             JOptionPane.showMessageDialog(this, "Keranjang kosong!");
             return;
@@ -705,8 +710,54 @@ public class StudioUI extends JFrame {
             }
         }
 
-        // Simpan ke CSV
-        simpanKeCSV(tanggal, jamMulai, durasi);
+        try {
+
+            int customerId = 1;
+
+            java.sql.Date sqlDate =
+                    java.sql.Date.valueOf(
+                            LocalDate.parse(
+                                    tanggal,
+                                    DateTimeFormatter.ofPattern("dd MMM yyyy")
+                            )
+                    );
+
+            java.sql.Time sqlTime =
+                    java.sql.Time.valueOf(jamMulai + ":00");
+
+            int bookingId = BookingDAO.insertBooking(
+                    customerId,
+                    currentBooking.studio.getId(),
+                    sqlDate,
+                    sqlTime,
+                    durasi,
+                    currentBooking.getTotal()
+            );
+
+            for (Instrument i : currentBooking.instruments.keySet()) {
+
+                int qty =
+                        currentBooking.instruments.get(i);
+
+                BookingDetailDAO.insertDetail(
+                        bookingId,
+                        i.getId(),
+                        qty
+                );
+            }
+
+        } catch (Exception ex) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Gagal simpan booking : "
+                            + ex.getMessage()
+            );
+
+            return;
+        }
+        
+        
         // PLAY SOUND KHUSUS
         playCustomSound("/assets/sound/success.wav");
         JOptionPane.showMessageDialog(this, "Pesanan Berhasil Disimpan ke Jadwal & History!\n" + totalLabel.getText());
@@ -753,30 +804,31 @@ public class StudioUI extends JFrame {
     }
 
     void showHistory() {
-        JTextArea txtHistory = new JTextArea(15, 100);
-        txtHistory.setEditable(false);
-        txtHistory.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        
-        File file = new File("history_penyewaan.csv");
-        if (file.exists()) {
-            try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-                txtHistory.append(String.format("%-15s %-25s %-15s %-10s %-10s %-15s\n", "TGL PESAN", "STUDIO/ALAT", "TGL SEWA", "JAM", "DURASI", "TOTAL (Rp)"));
-                txtHistory.append("----------------------------------------------------------------------------------------------\n");
-                String line;
-                while ((line = br.readLine()) != null) {
-                    String[] d = line.split(",");
-                    if (d.length >= 6) {
-                        txtHistory.append(String.format("%-15s %-25s %-15s %-10s %-10s %-15s\n", d[0], d[1], d[2], d[3], d[4]+" Jam", d[5]));
-                    }
-                }
-            } catch (IOException e) {
-                txtHistory.setText("Error membaca data history.");
-            }
-        } else {
-            txtHistory.setText("Belum ada riwayat transaksi.");
+
+        JTextArea area =
+                new JTextArea();
+
+        area.setEditable(false);
+
+        for(String row :
+                BookingHistoryDAO.getHistory()) {
+
+            area.append(row + "\n");
         }
 
-        JOptionPane.showMessageDialog(this, new JScrollPane(txtHistory), "Riwayat Penyewaan", JOptionPane.INFORMATION_MESSAGE);
+        JScrollPane sp =
+                new JScrollPane(area);
+
+        sp.setPreferredSize(
+                new Dimension(800,500)
+        );
+
+        JOptionPane.showMessageDialog(
+                this,
+                sp,
+                "Riwayat Booking",
+                JOptionPane.INFORMATION_MESSAGE
+        );
     }
 
 

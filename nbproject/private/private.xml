@@ -7,6 +7,29 @@
             <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/Booking.java</file>
             <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/Studio.java</file>
             <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/Instrument.java</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/Main.java</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/assets/images/studio_a.png</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/DBConnection.java</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/TestConnection.java</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/InstrumentDAO.java</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/TestDAO.java</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/InstrumentManagementUI.java</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/TestInstrumentUI.java</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/StudioDAO.java</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/MusicStudio.java</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/StudioManagementUI.java</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/TestStudioManagement.java</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/Customer.java</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/CustomerDAO.java</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/TestCustomer.java</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/BookingDAO.java</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/TestBooking.java</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/BookingDetailDAO.java</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/TestBookingDetail.java</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/BookingHistoryDAO.java</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/AdminDAO.java</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/LoginUI.java</file>
+            <file>file:/E:/Program%20ku/musicStudio/src/musicStudio/AdminDashboardUI.java</file>
         </group>
     </open-files>
 </project-private>
