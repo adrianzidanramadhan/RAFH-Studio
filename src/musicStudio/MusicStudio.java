@@ -1,5 +1,8 @@
 package musicStudio;
 
+import musicStudio.dao.StudioDAO;
+import musicStudio.model.Studio;
+
 public class TestStudioDAO {
 
     public static void main(String[] args) {
