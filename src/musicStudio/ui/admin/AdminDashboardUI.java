@@ -11,10 +11,12 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class AdminDashboardUI extends JFrame {
 
-    private JPanel contentPanel; // Panel kanan utama (CardLayout)
+    private JPanel contentPanel;
     private CardLayout cardLayout;
 
     // Label untuk statistik di halaman Dashboard Overview
@@ -23,15 +25,20 @@ public class AdminDashboardUI extends JFrame {
     private JLabel lblBooking;
     private JLabel lblRevenue;
 
+    // Label untuk Jam Digital (Thread 1)
+    private JLabel lblClock;
+
     public AdminDashboardUI() {
         setTitle("RAFH Studio - Admin Dashboard");
         setSize(1280, 720);
-        setExtendedState(JFrame.MAXIMIZED_BOTH); // Fullscreen opsional
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
         buildUI();
-        loadStatistics(); // Muat data statistik saat pertama buka
+        
+        loadStatistics(); // Muat data awal
+        startClockThread(); // -> JALANKAN THREAD JAM DIGITAL
 
         setVisible(true);
     }
@@ -47,7 +54,6 @@ public class AdminDashboardUI extends JFrame {
         sidebar.setPreferredSize(new Dimension(260, 0));
         sidebar.setBorder(new EmptyBorder(30, 15, 30, 15));
 
-        // Logo / Title Admin
         JLabel lblLogo = new JLabel("👑 RAFH ADMIN");
         lblLogo.setFont(new Font("SansSerif", Font.BOLD, 22));
         lblLogo.setForeground(Theme.WHITE);
@@ -56,7 +62,6 @@ public class AdminDashboardUI extends JFrame {
         sidebar.add(lblLogo);
         sidebar.add(Box.createVerticalStrut(35));
 
-        // Daftar Tombol Sidebar
         JButton btnDashboard  = createSidebarButton("🏠  Dashboard Overview");
         JButton btnStudio     = createSidebarButton("🏢  Kelola Studio");
         JButton btnInstrument = createSidebarButton("🎸  Kelola Instrument");
@@ -74,61 +79,71 @@ public class AdminDashboardUI extends JFrame {
         sidebar.add(Box.createVerticalStrut(8));
         sidebar.add(btnRefresh);
 
-        sidebar.add(Box.createVerticalGlue()); // Mendorong tombol logout ke bawah
+        sidebar.add(Box.createVerticalGlue());
         sidebar.add(btnLogout);
 
         root.add(sidebar, BorderLayout.WEST);
 
-        // --- 2. CONTENT PANEL DENGAN CARDLAYOUT (Kanan) ---
+        // --- 2. CONTENT PANEL (Kanan) ---
         cardLayout = new CardLayout();
         contentPanel = new JPanel(cardLayout);
         contentPanel.setBackground(Theme.BACKGROUND);
 
-        // Inisialisasi Seluruh Halaman (Panel)
         JPanel dashboardOverview = createDashboardOverviewPanel();
         StudioManagementUI studioPanel = new StudioManagementUI();
         InstrumentManagementUI instrumentPanel = new InstrumentManagementUI();
-        BookingHistoryUI bookingPanel = new BookingHistoryUI(); // --> Panel Riwayat Booking Ditambahkan!
+        BookingHistoryUI bookingPanel = new BookingHistoryUI();
 
-        // Daftarkan ke CardLayout dengan Key unik
         contentPanel.add(dashboardOverview, "MENU_DASHBOARD");
         contentPanel.add(studioPanel, "MENU_STUDIO");
         contentPanel.add(instrumentPanel, "MENU_INSTRUMENT");
-        contentPanel.add(bookingPanel, "MENU_BOOKING"); // --> Didaftarkan ke CardLayout!
+        contentPanel.add(bookingPanel, "MENU_BOOKING");
 
-        // Tampilkan halaman pertama (Dashboard Overview)
         cardLayout.show(contentPanel, "MENU_DASHBOARD");
-
         root.add(contentPanel, BorderLayout.CENTER);
 
-        // --- 3. EVENT LISTENER NAVIGASI TOMBOL SIDEBAR ---
+        // --- 3. EVENT LISTENER ---
         btnDashboard.addActionListener(e -> {
-            loadStatistics(); // Update statistik saat balik ke dashboard
+            loadStatistics();
             cardLayout.show(contentPanel, "MENU_DASHBOARD");
         });
 
         btnStudio.addActionListener(e -> cardLayout.show(contentPanel, "MENU_STUDIO"));
-        
         btnInstrument.addActionListener(e -> cardLayout.show(contentPanel, "MENU_INSTRUMENT"));
 
-        // --> Navigasi ke Riwayat Booking (Bukan Popup Lagi!)
         btnBooking.addActionListener(e -> {
-            bookingPanel.loadData(); // Otomatis refresh data terbaru sebelum dipanggil
+            bookingPanel.loadData();
             cardLayout.show(contentPanel, "MENU_BOOKING");
         });
 
+        // -> IMPLEMENTASI THREAD 2: REFRESH DENGAN SWINGWORKER
         btnRefresh.addActionListener(e -> {
-            loadStatistics();
-            JOptionPane.showMessageDialog(this, "Statistik berhasil diperbarui!", "Info", JOptionPane.INFORMATION_MESSAGE);
+            btnRefresh.setEnabled(false);
+            btnRefresh.setText("⏳  Memuat...");
+
+            // Pekerja Background Thread
+            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    // Simulasi delay sedikit (500ms) agar terasa proses load-nya
+                    Thread.sleep(500); 
+                    return null;
+                }
+
+                @Override
+                protected void done() {
+                    loadStatistics(); // Update label di GUI setelah selesai
+                    btnRefresh.setEnabled(true);
+                    btnRefresh.setText("🔄  Refresh Statistik");
+                    JOptionPane.showMessageDialog(AdminDashboardUI.this, "Statistik berhasil diperbarui!", "Info", JOptionPane.INFORMATION_MESSAGE);
+                }
+            };
+            worker.execute(); // Jalankan thread pekerja!
         });
 
         btnLogout.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(
-                    this,
-                    "Apakah Anda yakin ingin logout?",
-                    "Konfirmasi Logout",
-                    JOptionPane.YES_NO_OPTION
-            );
+                    this, "Apakah Anda yakin ingin logout?", "Konfirmasi Logout", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
                 new LoginUI();
                 dispose();
@@ -143,14 +158,21 @@ public class AdminDashboardUI extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Theme.BACKGROUND);
 
-        JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        // Header dengan Judul & Jam Digital
+        JPanel header = new JPanel(new BorderLayout());
         header.setBackground(Theme.BACKGROUND);
         header.setBorder(new EmptyBorder(30, 35, 15, 35));
 
         JLabel title = new JLabel("Dashboard Overview");
         title.setFont(new Font("SansSerif", Font.BOLD, 28));
         title.setForeground(Theme.TEXT);
-        header.add(title);
+        header.add(title, BorderLayout.WEST);
+
+        // Label untuk menampung jam real-time
+        lblClock = new JLabel("⏰ Memuat waktu...");
+        lblClock.setFont(new Font("SansSerif", Font.BOLD, 16));
+        lblClock.setForeground(Theme.GRAY);
+        header.add(lblClock, BorderLayout.EAST);
 
         panel.add(header, BorderLayout.NORTH);
 
@@ -171,6 +193,29 @@ public class AdminDashboardUI extends JFrame {
         panel.add(center, BorderLayout.CENTER);
 
         return panel;
+    }
+
+    // --- IMPLEMENTASI THREAD 1: JAM DIGITAL REAL-TIME ---
+    private void startClockThread() {
+        Thread clockThread = new Thread(() -> {
+            SimpleDateFormat sdf = new SimpleDateFormat("EEEE, dd MMMM yyyy  |  HH:mm:ss");
+            while (true) {
+                try {
+                    String currentTime = sdf.format(new Date());
+                    // Gunakan SwingUtilities.invokeLater agar aman mengupdate teks GUI dari background thread
+                    SwingUtilities.invokeLater(() -> {
+                        if (lblClock != null) {
+                            lblClock.setText("⏰  " + currentTime);
+                        }
+                    });
+                    Thread.sleep(1000); // Tidur 1 detik sebelum update waktu lagi
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
+        });
+        clockThread.setDaemon(true); // Thread otomatis mati jika aplikasi ditutup
+        clockThread.start();
     }
 
     private JPanel createStatCard(String title, JLabel valueLabel) {
@@ -200,7 +245,6 @@ public class AdminDashboardUI extends JFrame {
         return card;
     }
 
-    // --- FUNGSI LOAD STATISTIK DARI DATABASE ---
     private void loadStatistics() {
         try {
             int totalStudio = StudioDAO.getAllStudio().size();
@@ -212,13 +256,11 @@ public class AdminDashboardUI extends JFrame {
             if (lblInstrument != null) lblInstrument.setText(String.valueOf(totalInstrument));
             if (lblBooking != null) lblBooking.setText(String.valueOf(totalBooking));
             if (lblRevenue != null) lblRevenue.setText("Rp " + String.format("%,d", totalRevenue));
-
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // --- HELPER BUAT TOMBOL SIDEBAR MODERN ---
     private JButton createSidebarButton(String text) {
         JButton btn = new JButton(text);
         btn.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -234,14 +276,9 @@ public class AdminDashboardUI extends JFrame {
 
         btn.addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseEntered(MouseEvent e) {
-                btn.setBackground(Theme.SIDEBAR_HOVER);
-            }
-
+            public void mouseEntered(MouseEvent e) { btn.setBackground(Theme.SIDEBAR_HOVER); }
             @Override
-            public void mouseExited(MouseEvent e) {
-                btn.setBackground(Theme.SIDEBAR);
-            }
+            public void mouseExited(MouseEvent e) { btn.setBackground(Theme.SIDEBAR); }
         });
 
         return btn;
